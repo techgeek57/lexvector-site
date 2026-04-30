@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLACKSTONE Case Study — LexVector.ai</title>
+<meta name="description" content="How Grand Traverse County built a citation-pinned AI legal research agent for its Prosecutor's Office — from a laptop proof of concept to FedRAMP High production architecture.">
+<meta property="og:title" content="BLACKSTONE: Citation-Pinned Legal AI for County Prosecutors">
+<meta property="og:description" content="How Grand Traverse County built a citation-pinned AI legal research agent for its Prosecutor's Office.">
+<meta property="og:type" content="article">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0d14;
+    --bg-surface: #111420;
+    --bg-card: #161928;
+    --gold: #c8a45a;
+    --gold-light: #e2c07a;
+    --gold-dim: rgba(200, 164, 90, 0.12);
+    --gold-border: rgba(200, 164, 90, 0.22);
+    --text-primary: #edeae2;
+    --text-secondary: #8a8fa8;
+    --text-muted: #50566e;
+    --border: rgba(255,255,255,0.07);
+    --border-gold: rgba(200, 164, 90, 0.22);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,164,90,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,164,90,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 4rem;
+    background: rgba(11,13,20,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .nav-logo .logo-mark {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--gold);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+  }
+
+  .nav-back {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color 0.2s;
+  }
+
+  .nav-back:hover { color: var(--gold); }
+
+  /* ── HERO ── */
+  .case-hero {
+    padding: 10rem 2rem 5rem;
+    max-width: 860px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .case-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.2s forwards;
+  }
+
+  .meta-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    text-transform: uppercase;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold-border);
+    border-radius: 2px;
+    padding: 0.25rem 0.7rem;
+  }
+
+  .meta-divider {
+    width: 1px;
+    height: 14px;
+    background: var(--border);
+  }
+
+  .meta-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .case-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.8rem, 6vw, 4.5rem);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.35s forwards;
+  }
+
+  .case-title em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+
+  .case-deck {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.85;
+    font-weight: 300;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.5s forwards;
+  }
+
+  /* ── STAT BAR ── */
+  .stat-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 4rem 0 0;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.65s forwards;
+  }
+
+  .stat-cell {
+    padding: 2rem 1.5rem;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .stat-cell:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: var(--gold-light);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+
+  .stat-lbl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+
+  /* ── BODY CONTENT ── */
+  .case-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 5rem 2rem 8rem;
+  }
+
+  .case-section {
+    margin-bottom: 4.5rem;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    display: block;
+  }
+
+  .case-h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.9rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-bottom: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .case-h2 em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+
+  .case-p {
+    font-size: 0.975rem;
+    color: var(--text-secondary);
+    line-height: 1.95;
+    font-weight: 300;
+    margin-bottom: 1.25rem;
+  }
+
+  .case-p:last-child { margin-bottom: 0; }
+
+  /* Pull quote */
+  .pull-quote {
+    border-left: 2px solid var(--gold);
+    margin: 2.5rem 0;
+    padding: 1.25rem 0 1.25rem 2rem;
+  }
+
+  .pull-quote p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  .pull-quote cite {
+    display: block;
+    margin-top: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-style: normal;
+  }
+
+  /* Architecture block */
+  .arch-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    margin: 2rem 0;
+  }
+
+  .arch-block-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  .arch-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .arch-row:last-child { border-bottom: none; }
+
+  .arch-key {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    min-width: 160px;
+    flex-shrink: 0;
+    padding-top: 0.1rem;
+  }
+
+  .arch-val {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* Phase list */
+  .phase-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .phase-item {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .phase-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--gold);
+    opacity: 0.5;
+    line-height: 1.3;
+  }
+
+  .phase-content h4 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+
+  .phase-content p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  /* Principle list */
+  .principle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 2rem 0;
+  }
+
+  .principle-item {
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+
+  .principle-item:first-child { border-top: 1px solid var(--border); }
+
+  .principle-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .principle-title::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .principle-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.75;
+    padding-left: 1rem;
+  }
+
+  /* ── DIVIDER ── */
+  hr.section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+
+  /* ── CTA ── */
+  .case-cta {
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    padding: 5rem 2rem;
+    text-align: center;
+  }
+
+  .case-cta h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .case-cta h2 em { font-style: italic; color: var(--gold-light); }
+
+  .case-cta p {
+    font-size: 0.975rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.85;
+    font-weight: 300;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: #0b0d14;
+    padding: 0.8rem 2rem;
+    border-radius: 3px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: background 0.2s, transform 0.15s;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 2.5rem 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .footer-text {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    font-weight: 300;
+    text-align: right;
+    line-height: 1.7;
+  }
+
+  .footer-text a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-text a:hover { color: var(--gold); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .stat-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-cell:nth-child(2) { border-right: none; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
+    .footer-text { text-align: center; }
+    .arch-row { flex-direction: column; gap: 0.4rem; }
+    .arch-key { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="logo-mark">LV</div>
+    LexVector.ai
+  </a>
+  <a href="index.html#agents" class="nav-back">← Back to Agents</a>
+</nav>
+
+<!-- HERO -->
+<div class="case-hero">
+  <div class="case-meta">
+    <span class="meta-badge">Case Study</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Grand Traverse County · Michigan</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Prosecutor's Office</span>
+  </div>
+  <h1 class="case-title">BLACKSTONE:<br><em>Citation-pinned</em> legal AI<br>for county prosecutors.</h1>
+  <p class="case-deck">How a Michigan county IT director built a production-grade AI legal research system — from a laptop proof of concept to FedRAMP High architecture on AWS GovCloud — in under sixty days.</p>
+
+  <div class="stat-bar">
+    <div class="stat-cell">
+      <div class="stat-num">595</div>
+      <div class="stat-lbl">MCL documents indexed in production knowledge base</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">17+</div>
+      <div class="stat-lbl">MCL chapters covered across criminal, juvenile, and mental health law</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">100%</div>
+      <div class="stat-lbl">Answers traced to verbatim MCL source</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">High</div>
+      <div class="stat-lbl">FedRAMP compliance tier, AWS GovCloud</div>
+    </div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="case-body">
+
+  <!-- THE PROBLEM -->
+  <div class="case-section reveal">
+    <span class="section-label">The Problem</span>
+    <h2 class="case-h2">Legal research in county prosecutors offices is <em>slow, inconsistent, and legally risky.</em></h2>
+    <p class="case-p">Prosecutors working in county offices — unlike their counterparts at large law firms or state agencies — rarely have dedicated legal research staff. When a charging decision needs to be made, an assistant prosecutor must navigate hundreds of Michigan Compiled Laws sections, cross-reference sentencing guidelines, and verify that every element of a charge can be proven at trial. All of this happens under time pressure, often from an office without deep research infrastructure.</p>
+    <p class="case-p">Consumer AI tools like ChatGPT offered the promise of faster research — but introduced a far more dangerous problem: hallucination. An AI system that confidently cites a statute that doesn't exist, or misquotes a charging element, creates Brady disclosure obligations, suppression risks, and in the worst case, wrongful prosecution. In a legal context, a plausible-sounding wrong answer is worse than no answer at all.</p>
+    <p class="case-p">The Grand Traverse County IT team identified a precise requirement: any AI system used in a prosecutorial context must pin every answer to a verbatim, verified source. Not a paraphrase. Not a summary. The actual statutory text — cited, traceable, and auditable.</p>
+  </div>
+
+  <div class="pull-quote reveal">
+    <p>"Hallucination is not an acceptable risk in legal proceedings. Every answer must trace to a verbatim source."</p>
+    <cite>BLACKSTONE Design Principle — Grand Traverse County IT</cite>
+  </div>
+
+  <!-- THE APPROACH -->
+  <div class="case-section reveal">
+    <span class="section-label">The Approach</span>
+    <h2 class="case-h2">Build the <em>right constraint first,</em> then build the system around it.</h2>
+    <p class="case-p">Rather than deploying an existing legal AI product — most of which are built for large law firm use cases at large law firm price points — the Grand Traverse County team chose to build a purpose-built system grounded in a single architectural constraint: retrieval-augmented generation with citation pinning.</p>
+    <p class="case-p">In a citation-pinned RAG system, the AI model never answers from memory. Every response is generated by first retrieving the most relevant chunks of verified statutory text from an indexed knowledge base, and then instructing the model to answer only from those retrieved passages — with the source document and exact text included in every response. If the knowledge base doesn't contain an answer, the system says so.</p>
+    <p class="case-p">This constraint eliminates hallucination at the architectural level. It also creates a natural audit trail: every answer BLACKSTONE provides is backed by a specific MCL section, a specific passage, and a timestamp — meeting Brady documentation requirements without additional workflow overhead.</p>
+  </div>
+
+  <!-- THE BUILD -->
+  <div class="case-section reveal">
+    <span class="section-label">The Build</span>
+    <h2 class="case-h2">Proof of concept on a laptop.<br><em>Production on GovCloud.</em></h2>
+    <p class="case-p">The initial proof of concept was built in a single development sprint on a standard Windows laptop. Five Python files. A ChromaDB vector store. A Flask web interface. Four MCL documents ingested and chunked into 161 searchable passages. The entire stack ran locally, with no cloud dependency.</p>
+
+    <div class="arch-block reveal">
+      <div class="arch-block-title">Proof of Concept Stack</div>
+      <div class="arch-row">
+        <span class="arch-key">Language</span>
+        <span class="arch-val">Python 3.14</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">AI Model</span>
+        <span class="arch-val">Anthropic Claude (API)</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Vector Store</span>
+        <span class="arch-val">ChromaDB with sentence-transformers embeddings</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Interface</span>
+        <span class="arch-val">Flask web application, localhost</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Documents</span>
+        <span class="arch-val">Michigan Compiled Laws — PRV/OV sentencing scoring sections</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Files</span>
+        <span class="arch-val">config.py · ingest.py · retriever.py · app.py · index.html</span>
+      </div>
+    </div>
+
+    <p class="case-p">On April 7, 2026, the proof of concept was demonstrated live to Prosecutor Noelle and her team at the Grand Traverse County Prosecutor's Office. The demo covered live citation-pinned answers on PRV and OV sentencing scoring questions — the kind of detailed statutory lookup that previously required manual research. The prosecutors asked questions in real time. BLACKSTONE answered each one with the verbatim MCL passage it drew from.</p>
+    <p class="case-p">The prosecutors approved moving to production the same day.</p>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- PRODUCTION ARCHITECTURE -->
+  <div class="case-section reveal">
+    <span class="section-label">Production Architecture</span>
+    <h2 class="case-h2">Compliance shapes architecture.<br><em>FedRAMP High from the start.</em></h2>
+    <p class="case-p">Moving from a local proof of concept to a production system used by a county prosecutor's office required a fundamental rethinking of the hosting environment. Legal data — statutes, charging documents, case research — cannot live in a standard commercial cloud environment. The production architecture for BLACKSTONE was designed around FedRAMP High compliance from the first infrastructure decision.</p>
+
+    <div class="arch-block reveal">
+      <div class="arch-block-title">Production Architecture</div>
+      <div class="arch-row">
+        <span class="arch-key">Cloud Platform</span>
+        <span class="arch-val">AWS GovCloud (us-gov-east-1)</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">AI Model</span>
+        <span class="arch-val">Anthropic Claude Sonnet via Amazon Bedrock</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Compliance Tier</span>
+        <span class="arch-val">FedRAMP High</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Vector / Search</span>
+        <span class="arch-val">Amazon OpenSearch Serverless</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Document Storage</span>
+        <span class="arch-val">Amazon S3 (GovCloud) with auto-ingestion Lambda</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Identity</span>
+        <span class="arch-val">IAM Identity Center with Microsoft Entra SSO</span>
+      </div>
+      <div class="arch-row">
+        <span class="arch-key">Access Tiers</span>
+        <span class="arch-val">Admin · ReadOnly (prosecutors/court staff) · Auditor (Brady/compliance)</span>
+      </div>
+    </div>
+
+    <p class="case-p">The three-tier access model — Admin, ReadOnly, and Auditor — was designed specifically for the prosecutorial workflow. Assistant prosecutors query the system through the ReadOnly tier. Compliance staff and defense discovery review use the Auditor tier, which provides full query logs and source citations for Brady documentation. No user can modify the knowledge base through the query interface.</p>
+  </div>
+
+  <!-- ROADMAP -->
+  <div class="case-section reveal">
+    <span class="section-label">What's Next</span>
+    <h2 class="case-h2">Phase 2: <em>Integrating the full prosecutorial ecosystem.</em></h2>
+    <p class="case-p">The initial BLACKSTONE knowledge base focuses on Michigan Compiled Laws. Phase 2 extends the platform into the full workflow of a county prosecutor's office through three targeted integrations:</p>
+
+    <div class="phase-list">
+      <div class="phase-item">
+        <div class="phase-num">01</div>
+        <div class="phase-content">
+          <h4>Westlaw API Integration</h4>
+          <p>Extend the knowledge base beyond MCL statutes to include case law, annotations, and secondary sources through Westlaw's API. Citation pinning applies equally — every case citation traces to a verified Westlaw source record.</p>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">02</div>
+        <div class="phase-content">
+          <h4>Karpel PROSECUTORbyKarpel Integration</h4>
+          <p>Connect BLACKSTONE to the county's existing case management system via NIEM web services, allowing charging guidance to be generated in the context of a specific case record — not just in isolation.</p>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-num">03</div>
+        <div class="phase-content">
+          <h4>Axon Body Camera Transcript Integration</h4>
+          <p>Ingest Axon-generated transcripts as searchable text documents. Prosecutors will be able to query BLACKSTONE against the factual record of an incident — "given what the officer observed, what charges apply?" — with every answer still traced to statutory authority.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINCIPLES -->
+  <div class="case-section reveal">
+    <span class="section-label">Lessons Learned</span>
+    <h2 class="case-h2">What BLACKSTONE taught us about <em>building AI for government.</em></h2>
+
+    <div class="principle-list">
+      <div class="principle-item">
+        <div class="principle-title">Citation pinning is a constraint, not a feature</div>
+        <p class="principle-text">Designing hallucination out of the architecture — rather than trying to detect it after the fact — was the foundational decision that made BLACKSTONE usable in a legal context. Every subsequent design choice flowed from that constraint.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">Compliance belongs in the architecture, not the checklist</div>
+        <p class="principle-text">FedRAMP High was a first-class requirement from the first infrastructure decision, not an afterthought applied during security review. This approach adds cost and complexity early — and eliminates far larger costs later.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">A laptop demo is worth a thousand slide decks</div>
+        <p class="principle-text">The proof of concept was built to answer real questions from real prosecutors — not to demonstrate technology capability in the abstract. The specificity of the demo (PRV/OV sentencing scoring, live questions) is what earned same-day approval.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">The right tool for each job</div>
+        <p class="principle-text">BLACKSTONE is not a general-purpose AI assistant. It is a purpose-built legal research instrument. Scope discipline — knowing exactly what the system is and is not for — is what makes it trustworthy in a high-stakes environment.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CTA -->
+<div class="case-cta">
+  <h2>Building AI for your<br><em>county prosecutor's office?</em></h2>
+  <p>We built BLACKSTONE in Grand Traverse County, Michigan. The governance frameworks, architectural patterns, and lessons learned are available to peer counties ready to build responsibly.</p>
+  <a href="mailto:ai@gtcountymi.gov" class="btn-primary">Start a Conversation</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <a href="index.html" class="footer-logo">LexVector.ai</a>
+  <div class="footer-text">
+    A program of <a href="https://gtcountymi.gov" target="_blank">Grand Traverse County</a>, Michigan<br>
+    The AI Foundry · Center of Excellence for AI<br>
+    <span style="color: var(--text-muted); opacity: 0.5;">© 2025 Grand Traverse County. All rights reserved.</span>
+  </div>
+</footer>
+
+</div>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
