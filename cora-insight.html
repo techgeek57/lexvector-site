@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORA Insight Case Study — LexVector.ai</title>
+<meta name="description" content="How Grand Traverse County built an internal AI knowledge assistant for county employees — authenticated, grounded, and running entirely within Microsoft GCC.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0d14; --bg-surface: #111420; --bg-card: #161928;
+    --gold: #c8a45a; --gold-light: #e2c07a; --gold-dim: rgba(200,164,90,0.12); --gold-border: rgba(200,164,90,0.22);
+    --text-primary: #edeae2; --text-secondary: #d4d8ec; --text-muted: #b4b9d0;
+    --border: rgba(255,255,255,0.07); --border-gold: rgba(200,164,90,0.22);
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 16px; line-height: 1.7; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(200,164,90,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,164,90,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+  .wrapper { position: relative; z-index: 1; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 4rem; background: rgba(11,13,20,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 500; color: var(--text-primary); text-decoration: none; letter-spacing: 0.02em; display: flex; align-items: center; gap: 0.5rem; }
+  .nav-logo .logo-mark { width: 28px; height: 28px; border: 1.5px solid var(--gold); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--gold); font-family: 'DM Mono', monospace; }
+  .nav-back { font-size: 0.8rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.06em; transition: color 0.2s; }
+  .nav-back:hover { color: var(--gold); }
+  .case-hero { padding: 10rem 2rem 5rem; max-width: 860px; margin: 0 auto; text-align: center; }
+  .case-meta { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 0.7s ease 0.2s forwards; }
+  .meta-badge { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: 2px; padding: 0.25rem 0.7rem; }
+  .meta-divider { width: 1px; height: 14px; background: var(--border); }
+  .meta-text { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; }
+  .case-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem, 6vw, 4.5rem); font-weight: 300; line-height: 1.1; color: var(--text-primary); margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.7s ease 0.35s forwards; }
+  .case-title em { font-style: italic; color: var(--gold-light); }
+  .case-deck { font-size: 1.1rem; color: var(--text-secondary); max-width: 640px; margin: 0 auto; line-height: 1.85; font-weight: 300; opacity: 0; animation: fadeUp 0.7s ease 0.5s forwards; }
+  .stat-bar { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 4rem 0 0; opacity: 0; animation: fadeUp 0.7s ease 0.65s forwards; }
+  .stat-cell { padding: 2rem 1.5rem; border-right: 1px solid var(--border); text-align: center; }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--gold-light); line-height: 1; margin-bottom: 0.4rem; }
+  .stat-lbl { font-size: 0.75rem; color: var(--text-muted); font-weight: 300; letter-spacing: 0.04em; line-height: 1.4; }
+  .case-body { max-width: 720px; margin: 0 auto; padding: 5rem 2rem 8rem; }
+  .case-section { margin-bottom: 4.5rem; }
+  .section-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 1.25rem; display: block; }
+  .case-h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 400; color: var(--text-primary); margin-bottom: 1.25rem; line-height: 1.2; }
+  .case-h2 em { font-style: italic; color: var(--gold-light); }
+  .case-p { font-size: 0.975rem; color: var(--text-secondary); line-height: 1.95; font-weight: 300; margin-bottom: 1.25rem; }
+  .case-p:last-child { margin-bottom: 0; }
+  .pull-quote { border-left: 2px solid var(--gold); margin: 2.5rem 0; padding: 1.25rem 0 1.25rem 2rem; }
+  .pull-quote p { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 400; font-style: italic; color: var(--text-primary); line-height: 1.5; }
+  .pull-quote cite { display: block; margin-top: 0.75rem; font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; font-style: normal; }
+  .arch-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 2rem; margin: 2rem 0; }
+  .arch-block-title { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 1.25rem; }
+  .arch-row { display: flex; align-items: flex-start; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+  .arch-row:last-child { border-bottom: none; }
+  .arch-key { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--gold); min-width: 180px; flex-shrink: 0; padding-top: 0.1rem; }
+  .arch-val { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.6; }
+  .dept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0; }
+  .dept-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem; }
+  .dept-name { font-size: 0.8rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.4rem; }
+  .dept-desc { font-size: 0.775rem; color: var(--text-muted); font-weight: 300; line-height: 1.6; }
+  .principle-list { display: flex; flex-direction: column; gap: 0; margin: 2rem 0; }
+  .principle-item { padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+  .principle-item:first-child { border-top: 1px solid var(--border); }
+  .principle-title { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .principle-title::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+  .principle-text { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.75; padding-left: 1rem; }
+  hr.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+  .case-cta { background: var(--bg-surface); border-top: 1px solid var(--border); padding: 5rem 2rem; text-align: center; }
+  .case-cta h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--text-primary); margin-bottom: 1rem; }
+  .case-cta h2 em { font-style: italic; color: var(--gold-light); }
+  .case-cta p { font-size: 0.975rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2.5rem; line-height: 1.85; font-weight: 300; }
+  .btn-primary { background: var(--gold); color: #0b0d14; padding: 0.8rem 2rem; border-radius: 3px; font-size: 0.875rem; font-weight: 500; text-decoration: none; letter-spacing: 0.04em; transition: background 0.2s, transform 0.15s; display: inline-block; }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+  footer { padding: 2.5rem 4rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); }
+  .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--text-muted); text-decoration: none; }
+  .footer-text { font-size: 0.775rem; color: var(--text-muted); font-weight: 300; text-align: right; line-height: 1.7; }
+  .footer-text a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .footer-text a:hover { color: var(--gold); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .stat-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-cell:nth-child(2) { border-right: none; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
+    .footer-text { text-align: center; }
+    .arch-row { flex-direction: column; gap: 0.4rem; }
+    .arch-key { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<nav>
+  <a href="index.html" class="nav-logo"><div class="logo-mark">LV</div>LexVector.ai</a>
+  <a href="index.html#agents" class="nav-back">← Back to Agents</a>
+</nav>
+
+<div class="case-hero">
+  <div class="case-meta">
+    <span class="meta-badge">Case Study</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Grand Traverse County · Michigan</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Internal Operations</span>
+  </div>
+  <h1 class="case-title">CORA Insight:<br><em>Institutional knowledge,</em><br>instantly accessible.</h1>
+  <p class="case-deck">How Grand Traverse County gave 600 employees instant, grounded access to HR policies, contracts, procedures, and board policies — through a hybrid vector search AI agent running entirely within Microsoft GCC.</p>
+
+  <div class="stat-bar">
+    <div class="stat-cell">
+      <div class="stat-num">600+</div>
+      <div class="stat-lbl">County employees with authenticated access</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">27</div>
+      <div class="stat-lbl">Departments served across the county</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">3,072</div>
+      <div class="stat-lbl">Vector embedding dimensions — text-embedding-3-large</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">GCC</div>
+      <div class="stat-lbl">All data and services within Microsoft Government Cloud</div>
+    </div>
+  </div>
+</div>
+
+<div class="case-body">
+
+  <div class="case-section reveal">
+    <span class="section-label">The Problem</span>
+    <h2 class="case-h2">County employees spend too much time <em>finding things they already have.</em></h2>
+    <p class="case-p">Every county organization accumulates institutional knowledge — HR policies, personnel handbooks, vendor contracts, board resolutions, mutual aid agreements, grant documents, operational procedures. The challenge isn't that this information doesn't exist. It's that it lives in SharePoint folders, email attachments, filing cabinets, and the memories of people who've been there for twenty years.</p>
+    <p class="case-p">When an employee needs to know what the PTO accrual policy says, or wants to find the terms of a specific vendor contract, or needs to understand the county's CDBG citizen participation requirements, the answer exists somewhere. Finding it is the problem. And every minute spent searching is a minute not spent on the work that actually matters.</p>
+    <p class="case-p">CORA Insight was built to solve the knowledge retrieval problem — not by replacing the documents, but by making all of them instantly searchable and answerable through a single, authenticated, GCC-compliant AI interface.</p>
+  </div>
+
+  <div class="pull-quote reveal">
+    <p>"The answer exists somewhere. Finding it is the problem. CORA Insight makes every official county document instantly answerable — with the source cited every time."</p>
+    <cite>CORA Insight Design Principle — Grand Traverse County IT</cite>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">The Architecture</span>
+    <h2 class="case-h2">Hybrid vector search.<br><em>Authenticated. Isolated. GCC-compliant.</em></h2>
+    <p class="case-p">CORA Insight uses a hybrid retrieval architecture — combining BM25 keyword search with high-dimensional vector similarity search — to surface the most relevant document chunks for any employee query. The system uses Azure OpenAI's text-embedding-3-large model at 3,072 dimensions, providing exceptionally precise semantic matching even for complex policy and contract language.</p>
+
+    <div class="arch-block reveal">
+      <div class="arch-block-title">Technology Stack</div>
+      <div class="arch-row"><span class="arch-key">AI Agent Platform</span><span class="arch-val">Microsoft Copilot Studio (GCC) — hosted in Teams + SharePoint intranet</span></div>
+      <div class="arch-row"><span class="arch-key">Language Model</span><span class="arch-val">Azure OpenAI GPT-4o — cora-insight-openai-eastus2-v2</span></div>
+      <div class="arch-row"><span class="arch-key">Vector Embeddings</span><span class="arch-val">Azure OpenAI text-embedding-3-large (3,072 dims), HNSW algorithm (m=10)</span></div>
+      <div class="arch-row"><span class="arch-key">Search & Retrieval</span><span class="arch-val">Azure AI Search (Standard S1) — hybrid BM25 keyword + vector similarity</span></div>
+      <div class="arch-row"><span class="arch-key">Document Storage</span><span class="arch-val">Azure Blob Storage — stcorainsight (GCC, East US 2)</span></div>
+      <div class="arch-row"><span class="arch-key">Chunking Strategy</span><span class="arch-val">~2,000 character pages, 200 character overlap, one chunk per index document</span></div>
+      <div class="arch-row"><span class="arch-key">Authentication</span><span class="arch-val">Microsoft 365 SSO — county AD accounts only, no anonymous access</span></div>
+      <div class="arch-row"><span class="arch-key">Export Feature</span><span class="arch-val">Power Automate HTTP trigger → Word Online Business template → employee OneDrive</span></div>
+      <div class="arch-row"><span class="arch-key">Data Isolation</span><span class="arch-val">Completely separate index from CORA Connect — internal documents never publicly accessible</span></div>
+    </div>
+
+    <p class="case-p">A distinctive feature of CORA Insight's ingestion pipeline is the structured Markdown + JSON sidecar approach. Every document ingested into the knowledge base is converted to Markdown with YAML front matter containing authoritative metadata — title, document type, vendor name, effective and expiration dates, department, source URL, and tags. A matching JSON sidecar file ensures this metadata propagates to every chunk in the search index, enabling filtered retrieval by department, contract type, or date range.</p>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">Knowledge Base Coverage</span>
+    <h2 class="case-h2">Documents across every <em>department that needs them.</em></h2>
+    <p class="case-p">CORA Insight's knowledge base spans the full range of county operational documents — organized by department and document type, with pre-ingestion review required before any document enters the index.</p>
+
+    <div class="dept-grid">
+      <div class="dept-card">
+        <div class="dept-name">Human Resources</div>
+        <div class="dept-desc">Personnel handbook, HR policies, benefits information, version-controlled policy updates</div>
+      </div>
+      <div class="dept-card">
+        <div class="dept-name">Administration</div>
+        <div class="dept-desc">Personal services agreements, vendor contracts, operational procedures</div>
+      </div>
+      <div class="dept-card">
+        <div class="dept-name">Sheriff</div>
+        <div class="dept-desc">Mutual aid agreements, MOUs with partner agencies</div>
+      </div>
+      <div class="dept-card">
+        <div class="dept-name">Health Department</div>
+        <div class="dept-desc">Service agreements, public health grants, departmental procedures</div>
+      </div>
+      <div class="dept-card">
+        <div class="dept-name">Construction & Facilities</div>
+        <div class="dept-desc">CM agreements, AIA-referenced primary contract documents</div>
+      </div>
+      <div class="dept-card">
+        <div class="dept-name">Board of Commissioners</div>
+        <div class="dept-desc">Board policies, CDBG citizen participation requirements, adopted resolutions</div>
+      </div>
+    </div>
+
+    <p class="case-p">Each document category has a designated content owner and update cadence. New or renewed contracts are ingested within five business days of execution. HR policies are updated as they change, with strict version control enforced. BOC policies enter the knowledge base upon board adoption.</p>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="case-section reveal">
+    <span class="section-label">Lessons Learned</span>
+    <h2 class="case-h2">What CORA Insight taught us about <em>internal government AI.</em></h2>
+    <div class="principle-list">
+      <div class="principle-item">
+        <div class="principle-title">Metadata at ingestion time — not as an afterthought</div>
+        <p class="principle-text">The single most impactful architectural decision was requiring source URLs and metadata to be embedded in both YAML and JSON sidecar at document creation time. Attempting to stamp metadata after ingestion is significantly more complex. Build it in from the start.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">Hybrid search outperforms pure vector or pure keyword</div>
+        <p class="principle-text">County documents blend precise terminology (contract clause references, policy section numbers) with natural language. Hybrid BM25 + vector search handles both modes far better than either approach alone — especially for the complex language found in legal agreements and HR policies.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">GCC constraints require creative orchestration</div>
+        <p class="principle-text">Several Copilot Studio features available in commercial environments — including certain Power Automate triggers and UI components — are unavailable in GCC. The Export to Word feature, for example, required an HTTP-triggered Power Automate flow with a SAS-signed URL instead of native connector. Document these workarounds; they're institutional knowledge too.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">Data isolation between internal and public agents is mandatory</div>
+        <p class="principle-text">CORA Insight and CORA Connect share a platform but operate on entirely separate, isolated indices. Internal HR policies, vendor contracts, and operational documents never surface in the public agent. This separation is an architectural guarantee, not a configuration setting — it was designed in, not bolted on.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="case-cta">
+  <h2>Ready to bring CORA Insight<br><em>to your county employees?</em></h2>
+  <p>We built CORA Insight for Grand Traverse County's 600 employees across 27 departments. The implementation runbook, governance framework, and ingestion pipeline patterns are available to peer counties.</p>
+  <a href="mailto:ai@gtcountymi.gov" class="btn-primary">Start a Conversation</a>
+</div>
+
+<footer>
+  <a href="index.html" class="footer-logo">LexVector.ai</a>
+  <div class="footer-text">
+    A program of <a href="https://gtcountymi.gov" target="_blank">Grand Traverse County</a>, Michigan<br>
+    The AI Foundry · Center of Excellence for AI<br>
+    <span style="opacity:0.5;">© 2025 Grand Traverse County. All rights reserved.</span>
+  </div>
+</footer>
+</div>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

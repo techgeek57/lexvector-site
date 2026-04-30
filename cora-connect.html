@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORA Connect Case Study — LexVector.ai</title>
+<meta name="description" content="How Grand Traverse County built a 311-style public AI agent for residents — grounded, anonymous, GCC-compliant, and live on gtcountymi.gov.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0d14; --bg-surface: #111420; --bg-card: #161928;
+    --gold: #c8a45a; --gold-light: #e2c07a; --gold-dim: rgba(200,164,90,0.12); --gold-border: rgba(200,164,90,0.22);
+    --text-primary: #edeae2; --text-secondary: #d4d8ec; --text-muted: #b4b9d0;
+    --border: rgba(255,255,255,0.07); --border-gold: rgba(200,164,90,0.22);
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 16px; line-height: 1.7; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(200,164,90,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,164,90,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+  .wrapper { position: relative; z-index: 1; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 4rem; background: rgba(11,13,20,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 500; color: var(--text-primary); text-decoration: none; letter-spacing: 0.02em; display: flex; align-items: center; gap: 0.5rem; }
+  .nav-logo .logo-mark { width: 28px; height: 28px; border: 1.5px solid var(--gold); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--gold); font-family: 'DM Mono', monospace; }
+  .nav-back { font-size: 0.8rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.06em; transition: color 0.2s; }
+  .nav-back:hover { color: var(--gold); }
+  .case-hero { padding: 10rem 2rem 5rem; max-width: 860px; margin: 0 auto; text-align: center; }
+  .case-meta { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 0.7s ease 0.2s forwards; }
+  .meta-badge { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: 2px; padding: 0.25rem 0.7rem; }
+  .meta-divider { width: 1px; height: 14px; background: var(--border); }
+  .meta-text { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; }
+  .case-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem, 6vw, 4.5rem); font-weight: 300; line-height: 1.1; color: var(--text-primary); margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.7s ease 0.35s forwards; }
+  .case-title em { font-style: italic; color: var(--gold-light); }
+  .case-deck { font-size: 1.1rem; color: var(--text-secondary); max-width: 640px; margin: 0 auto; line-height: 1.85; font-weight: 300; opacity: 0; animation: fadeUp 0.7s ease 0.5s forwards; }
+  .stat-bar { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 4rem 0 0; opacity: 0; animation: fadeUp 0.7s ease 0.65s forwards; }
+  .stat-cell { padding: 2rem 1.5rem; border-right: 1px solid var(--border); text-align: center; }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--gold-light); line-height: 1; margin-bottom: 0.4rem; }
+  .stat-lbl { font-size: 0.75rem; color: var(--text-muted); font-weight: 300; letter-spacing: 0.04em; line-height: 1.4; }
+  .case-body { max-width: 720px; margin: 0 auto; padding: 5rem 2rem 8rem; }
+  .case-section { margin-bottom: 4.5rem; }
+  .section-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 1.25rem; display: block; }
+  .case-h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 400; color: var(--text-primary); margin-bottom: 1.25rem; line-height: 1.2; }
+  .case-h2 em { font-style: italic; color: var(--gold-light); }
+  .case-p { font-size: 0.975rem; color: var(--text-secondary); line-height: 1.95; font-weight: 300; margin-bottom: 1.25rem; }
+  .case-p:last-child { margin-bottom: 0; }
+  .pull-quote { border-left: 2px solid var(--gold); margin: 2.5rem 0; padding: 1.25rem 0 1.25rem 2rem; }
+  .pull-quote p { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 400; font-style: italic; color: var(--text-primary); line-height: 1.5; }
+  .pull-quote cite { display: block; margin-top: 0.75rem; font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; font-style: normal; }
+  .arch-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 2rem; margin: 2rem 0; }
+  .arch-block-title { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 1.25rem; }
+  .arch-row { display: flex; align-items: flex-start; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+  .arch-row:last-child { border-bottom: none; }
+  .arch-key { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--gold); min-width: 180px; flex-shrink: 0; padding-top: 0.1rem; }
+  .arch-val { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.6; }
+  .principle-list { display: flex; flex-direction: column; gap: 0; margin: 2rem 0; }
+  .principle-item { padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+  .principle-item:first-child { border-top: 1px solid var(--border); }
+  .principle-title { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .principle-title::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+  .principle-text { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.75; padding-left: 1rem; }
+  .flow-steps { display: flex; flex-direction: column; gap: 0; margin: 2rem 0; }
+  .flow-step { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .flow-step:first-child { border-top: 1px solid var(--border); }
+  .flow-num { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--gold); padding-top: 0.15rem; }
+  .flow-text { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.7; }
+  .flow-text strong { color: var(--text-primary); font-weight: 500; }
+  hr.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+  .case-cta { background: var(--bg-surface); border-top: 1px solid var(--border); padding: 5rem 2rem; text-align: center; }
+  .case-cta h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--text-primary); margin-bottom: 1rem; }
+  .case-cta h2 em { font-style: italic; color: var(--gold-light); }
+  .case-cta p { font-size: 0.975rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2.5rem; line-height: 1.85; font-weight: 300; }
+  .btn-primary { background: var(--gold); color: #0b0d14; padding: 0.8rem 2rem; border-radius: 3px; font-size: 0.875rem; font-weight: 500; text-decoration: none; letter-spacing: 0.04em; transition: background 0.2s, transform 0.15s; display: inline-block; }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+  footer { padding: 2.5rem 4rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); }
+  .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--text-muted); text-decoration: none; }
+  .footer-text { font-size: 0.775rem; color: var(--text-muted); font-weight: 300; text-align: right; line-height: 1.7; }
+  .footer-text a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .footer-text a:hover { color: var(--gold); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; } .reveal-delay-2 { transition-delay: 0.2s; }
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .stat-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-cell:nth-child(2) { border-right: none; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
+    .footer-text { text-align: center; }
+    .arch-row { flex-direction: column; gap: 0.4rem; }
+    .arch-key { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<nav>
+  <a href="index.html" class="nav-logo"><div class="logo-mark">LV</div>LexVector.ai</a>
+  <a href="index.html#agents" class="nav-back">← Back to Agents</a>
+</nav>
+
+<div class="case-hero">
+  <div class="case-meta">
+    <span class="meta-badge">Case Study</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Grand Traverse County · Michigan</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Public Services</span>
+  </div>
+  <h1 class="case-title">CORA Connect:<br>A <em>311-style AI agent</em><br>for every resident.</h1>
+  <p class="case-deck">How Grand Traverse County put an AI-powered public service assistant on its website — anonymous, grounded in verified county documents, and compliant with FedRAMP GCC — in time for residents to use it the same day it launched.</p>
+
+  <div class="stat-bar">
+    <div class="stat-cell">
+      <div class="stat-num">1,403</div>
+      <div class="stat-lbl">Resident sessions since April 7, 2026 launch</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">24/7</div>
+      <div class="stat-lbl">Availability — no phone queue, no after-hours gap</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">0</div>
+      <div class="stat-lbl">PII collected — fully anonymous access</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">GCC</div>
+      <div class="stat-lbl">FedRAMP-authorized Microsoft Government Cloud</div>
+    </div>
+  </div>
+</div>
+
+<div class="case-body">
+
+  <div class="case-section reveal">
+    <span class="section-label">The Problem</span>
+    <h2 class="case-h2">Residents deserve answers <em>outside of business hours.</em></h2>
+    <p class="case-p">County government runs on business hours. Residents don't. Someone trying to find out when the next Board of Commissioners meeting is, what the FY2026 budget covers, or how to contact the Health Department shouldn't have to wait until Monday morning to find out. And county staff shouldn't spend their day fielding calls that a well-designed AI agent can handle instantly.</p>
+    <p class="case-p">The challenge for a county government isn't just deploying an AI chatbot — it's deploying one that only answers from verified, approved public documents. A county AI that fabricates a policy, misquotes a budget figure, or invents a service that doesn't exist creates real liability. The constraint was the same as it always is in government AI: grounded answers only, every response tied to a real source.</p>
+    <p class="case-p">CORA Connect was built to solve exactly this problem — a 311-style public service agent that answers resident questions accurately, anonymously, and within the compliance boundary that government demands.</p>
+  </div>
+
+  <div class="pull-quote reveal">
+    <p>"A county AI that fabricates a policy or invents a service creates real liability. Grounded answers only — that's the constraint that makes public-sector AI trustworthy."</p>
+    <cite>CORA Connect Design Principle — Grand Traverse County IT</cite>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">The Architecture</span>
+    <h2 class="case-h2">RAG pipeline. GCC boundary.<br><em>Grounded from the first response.</em></h2>
+    <p class="case-p">CORA Connect is built on a Retrieval-Augmented Generation pipeline running entirely within Microsoft's Government Community Cloud. Every resident question goes through the same sequence: retrieve relevant chunks from a verified document index, then generate an answer constrained strictly to what was retrieved. If the knowledge base doesn't contain the answer, CORA Connect says so and routes the resident to the right department.</p>
+
+    <div class="arch-block reveal">
+      <div class="arch-block-title">Technology Stack</div>
+      <div class="arch-row"><span class="arch-key">AI Agent Platform</span><span class="arch-val">Microsoft Copilot Studio (GCC)</span></div>
+      <div class="arch-row"><span class="arch-key">Language Model</span><span class="arch-val">Azure OpenAI (GCC-routed via Copilot Studio)</span></div>
+      <div class="arch-row"><span class="arch-key">Search & Retrieval</span><span class="arch-val">Azure AI Search — cora-connect-index-v4 with cora-skillset</span></div>
+      <div class="arch-row"><span class="arch-key">Document Storage</span><span class="arch-val">Azure Blob Storage (GCC, East US 2) — cora-documents container</span></div>
+      <div class="arch-row"><span class="arch-key">Chunking Strategy</span><span class="arch-val">2,000 character pages, 200 character overlap for context continuity</span></div>
+      <div class="arch-row"><span class="arch-key">Indexer Schedule</span><span class="arch-val">Hourly (PT1H) — new documents live within 60 minutes of upload</span></div>
+      <div class="arch-row"><span class="arch-key">Public Hosting</span><span class="arch-val">gtcountymi.gov — embedded GCC webchat widget (lazy-load)</span></div>
+      <div class="arch-row"><span class="arch-key">Compliance</span><span class="arch-val">FedRAMP-authorized GCC services, NIST AI RMF, WCAG 2.1 AA</span></div>
+    </div>
+
+    <p class="case-p">The data flow for every resident interaction follows the same path:</p>
+
+    <div class="flow-steps">
+      <div class="flow-step"><span class="flow-num">01</span><span class="flow-text"><strong>Resident submits question</strong> via the embedded chat widget on gtcountymi.gov</span></div>
+      <div class="flow-step"><span class="flow-num">02</span><span class="flow-text"><strong>Copilot Studio retrieves</strong> the most relevant document chunks from Azure AI Search</span></div>
+      <div class="flow-step"><span class="flow-num">03</span><span class="flow-text"><strong>Azure OpenAI generates</strong> a response constrained strictly to the retrieved content — citations included</span></div>
+      <div class="flow-step"><span class="flow-num">04</span><span class="flow-text"><strong>Response renders</strong> in the widget with source citation and AI disclaimer</span></div>
+      <div class="flow-step"><span class="flow-num">05</span><span class="flow-text"><strong>If no relevant content found</strong>, CORA routes to gtcountymi.gov or the responsible department — never fabricates</span></div>
+    </div>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">The Knowledge Base</span>
+    <h2 class="case-h2">Only what's <em>approved for public release.</em></h2>
+    <p class="case-p">CORA Connect's knowledge base contains exclusively public county documents — nothing internal, nothing sensitive, nothing that hasn't been reviewed and approved for public distribution. Content is organized across five logical categories in Azure Blob Storage, each with a designated content owner and upload cadence.</p>
+
+    <div class="arch-block reveal">
+      <div class="arch-block-title">Document Categories</div>
+      <div class="arch-row"><span class="arch-key">BOC Minutes & Agendas</span><span class="arch-val">Board of Commissioners meeting records — uploaded within 48 hours of each meeting by County Clerk</span></div>
+      <div class="arch-row"><span class="arch-key">Adopted Budgets</span><span class="arch-val">FY budget documents and amendments — maintained by Finance upon adoption</span></div>
+      <div class="arch-row"><span class="arch-key">Health Notices</span><span class="arch-val">Public health department notices and requirements — maintained by Health Department as published</span></div>
+      <div class="arch-row"><span class="arch-key">Public Policies</span><span class="arch-val">County resolutions, ordinances, and procedural information</span></div>
+      <div class="arch-row"><span class="arch-key">Department Services</span><span class="arch-val">Service descriptions and procedural information for all public-facing county departments</span></div>
+    </div>
+
+    <p class="case-p">Every document goes through a pre-upload review for PII, HIPAA, and law enforcement sensitivity before entering the knowledge base. CORA Connect is strictly isolated from CORA Insight — internal documents are never accessible through the public agent.</p>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="case-section reveal">
+    <span class="section-label">What's Next</span>
+    <h2 class="case-h2">Honest roadmap:<br><em>building what GCC doesn't give you.</em></h2>
+    <p class="case-p">One of the realities of building government AI inside Microsoft's GCC environment is that some features available in commercial Copilot Studio simply aren't available in GCC. CORA Connect's roadmap reflects that honestly.</p>
+    <p class="case-p">The most notable gap: thumbs up/down feedback is not a native feature in Copilot Studio GCC. Rather than accepting this limitation, the Grand Traverse County team is building a custom feedback mechanism — a lightweight Power Automate flow that captures resident satisfaction signals and routes them to the IT team for knowledge base improvement. This kind of workaround is exactly what government AI practitioners need to share with each other — not the polished demo, but the real implementation detail.</p>
+    <p class="case-p">Additional roadmap items include expanded department content coverage, multilingual support, and CSAT analytics integration as GCC feature parity with commercial Copilot Studio continues to improve.</p>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">Lessons Learned</span>
+    <h2 class="case-h2">What CORA Connect taught us about <em>public-sector AI deployment.</em></h2>
+    <div class="principle-list">
+      <div class="principle-item">
+        <div class="principle-title">Grounded-only is non-negotiable for public institutions</div>
+        <p class="principle-text">A public AI agent that answers from memory — rather than verified documents — creates liability the moment it gets something wrong. Constraining generation to retrieved content isn't a limitation; it's the feature that makes the agent trustworthy.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">GCC compliance shapes your feature set</div>
+        <p class="principle-text">Building inside Microsoft GCC means accepting that some commercial features don't exist yet, and that some integrations require creative workarounds. Knowing this upfront lets you design around the gaps rather than discover them in production.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">Content ownership is as important as technology</div>
+        <p class="principle-text">An AI agent is only as good as its knowledge base. Defining who owns each document category — and when they update it — is an organizational challenge, not a technical one. CORA Connect's content cadence governance was designed before the first document was uploaded.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">1,403 sessions don't lie</div>
+        <p class="principle-text">A soft launch with no marketing push generated over 1,400 resident sessions. That's residents actively choosing to use the agent to find county information — validating the core premise before any formal rollout.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="case-cta">
+  <h2>Ready to bring CORA Connect<br><em>to your county?</em></h2>
+  <p>We built CORA Connect in Grand Traverse County and have shared the implementation runbook with peer counties across Michigan. The architecture, governance framework, and lessons learned are yours.</p>
+  <a href="mailto:ai@gtcountymi.gov" class="btn-primary">Start a Conversation</a>
+</div>
+
+<footer>
+  <a href="index.html" class="footer-logo">LexVector.ai</a>
+  <div class="footer-text">
+    A program of <a href="https://gtcountymi.gov" target="_blank">Grand Traverse County</a>, Michigan<br>
+    The AI Foundry · Center of Excellence for AI<br>
+    <span style="opacity:0.5;">© 2025 Grand Traverse County. All rights reserved.</span>
+  </div>
+</footer>
+</div>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
