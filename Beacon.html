@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEACON Case Study — LexVector.ai</title>
+<meta name="description" content="How Grand Traverse County built a self-hosted, FedRAMP-compliant web analytics platform — zero PII, no third-party vendors, 431 visitors tracked on launch day.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0d14; --bg-surface: #111420; --bg-card: #161928;
+    --gold: #c8a45a; --gold-light: #e2c07a; --gold-dim: rgba(200,164,90,0.12); --gold-border: rgba(200,164,90,0.22);
+    --text-primary: #edeae2; --text-secondary: #d4d8ec; --text-muted: #b4b9d0;
+    --border: rgba(255,255,255,0.07); --border-gold: rgba(200,164,90,0.22);
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 16px; line-height: 1.7; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(200,164,90,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,164,90,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+  .wrapper { position: relative; z-index: 1; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 4rem; background: rgba(11,13,20,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 500; color: var(--text-primary); text-decoration: none; letter-spacing: 0.02em; display: flex; align-items: center; gap: 0.5rem; }
+  .nav-logo .logo-mark { width: 28px; height: 28px; border: 1.5px solid var(--gold); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--gold); font-family: 'DM Mono', monospace; }
+  .nav-back { font-size: 0.8rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.06em; transition: color 0.2s; }
+  .nav-back:hover { color: var(--gold); }
+  .case-hero { padding: 10rem 2rem 5rem; max-width: 860px; margin: 0 auto; text-align: center; }
+  .case-meta { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s ease 0.2s forwards; }
+  .meta-badge { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: 2px; padding: 0.25rem 0.7rem; }
+  .meta-divider { width: 1px; height: 14px; background: var(--border); }
+  .meta-text { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; }
+  .case-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem, 6vw, 4.5rem); font-weight: 300; line-height: 1.1; color: var(--text-primary); margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.7s ease 0.35s forwards; }
+  .case-title em { font-style: italic; color: var(--gold-light); }
+  .case-deck { font-size: 1.1rem; color: var(--text-secondary); max-width: 640px; margin: 0 auto; line-height: 1.85; font-weight: 300; opacity: 0; animation: fadeUp 0.7s ease 0.5s forwards; }
+  .stat-bar { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 4rem 0 0; opacity: 0; animation: fadeUp 0.7s ease 0.65s forwards; }
+  .stat-cell { padding: 2rem 1.5rem; border-right: 1px solid var(--border); text-align: center; }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--gold-light); line-height: 1; margin-bottom: 0.4rem; }
+  .stat-lbl { font-size: 0.75rem; color: var(--text-muted); font-weight: 300; letter-spacing: 0.04em; line-height: 1.4; }
+  .case-body { max-width: 720px; margin: 0 auto; padding: 5rem 2rem 8rem; }
+  .case-section { margin-bottom: 4.5rem; }
+  .section-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 1.25rem; display: block; }
+  .case-h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 400; color: var(--text-primary); margin-bottom: 1.25rem; line-height: 1.2; }
+  .case-h2 em { font-style: italic; color: var(--gold-light); }
+  .case-p { font-size: 0.975rem; color: var(--text-secondary); line-height: 1.95; font-weight: 300; margin-bottom: 1.25rem; }
+  .case-p:last-child { margin-bottom: 0; }
+  .pull-quote { border-left: 2px solid var(--gold); margin: 2.5rem 0; padding: 1.25rem 0 1.25rem 2rem; }
+  .pull-quote p { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 400; font-style: italic; color: var(--text-primary); line-height: 1.5; }
+  .pull-quote cite { display: block; margin-top: 0.75rem; font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; font-style: normal; }
+  .arch-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 2rem; margin: 2rem 0; }
+  .arch-block-title { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; margin-bottom: 1.25rem; }
+  .arch-row { display: flex; align-items: flex-start; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+  .arch-row:last-child { border-bottom: none; }
+  .arch-key { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--gold); min-width: 180px; flex-shrink: 0; padding-top: 0.1rem; }
+  .arch-val { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.6; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0; }
+  .metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 1.5rem; text-align: center; }
+  .metric-val { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--gold-light); line-height: 1; margin-bottom: 0.4rem; }
+  .metric-lbl { font-size: 0.75rem; color: var(--text-muted); font-weight: 300; line-height: 1.4; }
+  .flow-steps { display: flex; flex-direction: column; gap: 0; margin: 2rem 0; }
+  .flow-step { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .flow-step:first-child { border-top: 1px solid var(--border); }
+  .flow-num { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--gold); padding-top: 0.15rem; }
+  .flow-text { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.7; }
+  .flow-text strong { color: var(--text-primary); font-weight: 500; }
+  .principle-list { display: flex; flex-direction: column; gap: 0; margin: 2rem 0; }
+  .principle-item { padding: 1.25rem 0; border-bottom: 1px solid var(--border); }
+  .principle-item:first-child { border-top: 1px solid var(--border); }
+  .principle-title { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .principle-title::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+  .principle-text { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; line-height: 1.75; padding-left: 1rem; }
+  hr.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+  .case-cta { background: var(--bg-surface); border-top: 1px solid var(--border); padding: 5rem 2rem; text-align: center; }
+  .case-cta h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: var(--text-primary); margin-bottom: 1rem; }
+  .case-cta h2 em { font-style: italic; color: var(--gold-light); }
+  .case-cta p { font-size: 0.975rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 2.5rem; line-height: 1.85; font-weight: 300; }
+  .btn-primary { background: var(--gold); color: #0b0d14; padding: 0.8rem 2rem; border-radius: 3px; font-size: 0.875rem; font-weight: 500; text-decoration: none; letter-spacing: 0.04em; transition: background 0.2s, transform 0.15s; display: inline-block; }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+  footer { padding: 2.5rem 4rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); }
+  .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--text-muted); text-decoration: none; }
+  .footer-text { font-size: 0.775rem; color: var(--text-muted); font-weight: 300; text-align: right; line-height: 1.7; }
+  .footer-text a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .footer-text a:hover { color: var(--gold); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; } .reveal-delay-2 { transition-delay: 0.2s; }
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .stat-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-cell:nth-child(2) { border-right: none; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
+    .footer-text { text-align: center; }
+    .arch-row { flex-direction: column; gap: 0.4rem; }
+    .arch-key { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<nav>
+  <a href="index.html" class="nav-logo"><div class="logo-mark">LV</div>LexVector.ai</a>
+  <a href="index.html#agents" class="nav-back">← Back to Platforms</a>
+</nav>
+
+<div class="case-hero">
+  <div class="case-meta">
+    <span class="meta-badge">Case Study</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Grand Traverse County · Michigan</span>
+    <div class="meta-divider"></div>
+    <span class="meta-text">Analytics Infrastructure</span>
+  </div>
+  <h1 class="case-title">BEACON:<br><em>Self-hosted analytics</em><br>built for government.</h1>
+  <p class="case-deck">How Grand Traverse County replaced third-party analytics with a FedRAMP-compliant, zero-PII web analytics platform — built on AWS GovCloud, secured by Microsoft 365 SSO, and live on day one with 431 visitors tracked.</p>
+
+  <div class="stat-bar">
+    <div class="stat-cell">
+      <div class="stat-num">431+</div>
+      <div class="stat-lbl">Unique visitors tracked on launch day alone</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">0</div>
+      <div class="stat-lbl">PII collected — no cookies, no localStorage, ever</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">0</div>
+      <div class="stat-lbl">Third-party analytics vendors — fully self-hosted</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">High</div>
+      <div class="stat-lbl">FedRAMP compliance tier, AWS GovCloud us-gov-east-1</div>
+    </div>
+  </div>
+</div>
+
+<div class="case-body">
+
+  <div class="case-section reveal">
+    <span class="section-label">The Problem</span>
+    <h2 class="case-h2">County government can't use <em>Google Analytics.</em></h2>
+    <p class="case-p">Most government websites quietly rely on Google Analytics or similar commercial tracking services to understand how residents use their digital services. These tools work — but they create real problems for government: resident data flows to third-party servers, PII exposure risks are difficult to fully mitigate, and FedRAMP compliance requirements make commercial analytics platforms a square peg in a round hole.</p>
+    <p class="case-p">Grand Traverse County needed to know how residents were using gtcountymi.gov and, critically, how they were engaging with CORA Connect — the county's public AI service agent. Without analytics, there was no way to measure whether the AI was actually helping people, which pages were driving the most questions, or where residents were dropping off.</p>
+    <p class="case-p">The answer couldn't be Google Analytics. It had to be something the county owned, controlled, and operated — with zero resident PII, no third-party data flows, and architecture that could pass a FedRAMP audit without exceptions.</p>
+  </div>
+
+  <div class="pull-quote reveal">
+    <p>"You can't improve what you can't measure. But you also can't measure resident behavior in a way that compromises their privacy. BEACON solves both problems at once."</p>
+    <cite>BEACON Design Principle — Grand Traverse County IT</cite>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">The Architecture</span>
+    <h2 class="case-h2">Serverless. Zero PII.<br><em>Entirely government-owned.</em></h2>
+    <p class="case-p">BEACON is built on a fully serverless AWS GovCloud architecture — no servers to patch, no infrastructure to manage, and costs that scale precisely with actual traffic. The system collects page-level analytics only, anonymizing every visitor through a daily-rotating SHA-256 hash of IP address, user agent, and a date salt. The hash rotates every 24 hours, making it impossible to track any individual across sessions.</p>
+
+    <div class="arch-block reveal">
+      <div class="arch-block-title">Technology Stack</div>
+      <div class="arch-row"><span class="arch-key">Cloud Platform</span><span class="arch-val">AWS GovCloud (us-gov-east-1) — FedRAMP High authorized</span></div>
+      <div class="arch-row"><span class="arch-key">Ingest</span><span class="arch-val">API Gateway HTTP API v2 → beacon-ingest Lambda (Node.js 20) → DynamoDB</span></div>
+      <div class="arch-row"><span class="arch-key">Storage</span><span class="arch-val">DynamoDB beacon-events-dev (90-day TTL) + beacon-daily-dev (permanent aggregates)</span></div>
+      <div class="arch-row"><span class="arch-key">Query</span><span class="arch-val">beacon-query Lambda (Node.js 20) → reads daily aggregates → returns JSON</span></div>
+      <div class="arch-row"><span class="arch-key">Tracking Script</span><span class="arch-val">beacon.js v2 — hosted in S3 GovCloud, injected by CivicPlus CMS site-wide</span></div>
+      <div class="arch-row"><span class="arch-key">Staff Dashboard</span><span class="arch-val">Static HTML + Chart.js — hosted in S3 GovCloud, secured by Microsoft 365 SSO</span></div>
+      <div class="arch-row"><span class="arch-key">Authentication</span><span class="arch-val">MSAL.js v2 (self-hosted in S3, no CDN) — @gtcountymi.gov accounts only via Entra ID</span></div>
+      <div class="arch-row"><span class="arch-key">Anonymization</span><span class="arch-val">SHA-256 hash of IP + User-Agent + daily date salt — rotates every 24 hours</span></div>
+      <div class="arch-row"><span class="arch-key">Privacy</span><span class="arch-val">No cookies, no localStorage, no cross-session tracking, no PII at any point</span></div>
+    </div>
+
+    <p class="case-p">The data flow for every page view is clean and auditable:</p>
+
+    <div class="flow-steps">
+      <div class="flow-step"><span class="flow-num">01</span><span class="flow-text"><strong>Resident loads a page</strong> on gtcountymi.gov — beacon.js fires automatically</span></div>
+      <div class="flow-step"><span class="flow-num">02</span><span class="flow-text"><strong>POST /collect</strong> sends page path, referrer, device type — no IP, no identity</span></div>
+      <div class="flow-step"><span class="flow-num">03</span><span class="flow-text"><strong>Ingest Lambda anonymizes</strong> the visitor, writes a raw event and updates 5 daily dimension counters atomically in DynamoDB</span></div>
+      <div class="flow-step"><span class="flow-num">04</span><span class="flow-step"><span class="flow-num"></span><span class="flow-text"><strong>Raw events auto-delete</strong> after 90 days via DynamoDB TTL — daily aggregates are permanent</span></span></div>
+      <div class="flow-step"><span class="flow-num">05</span><span class="flow-text"><strong>Staff dashboard</strong> queries /stats, renders Chart.js charts with 7D/30D/90D range toggles — M365 login required</span></div>
+    </div>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">CORA Connect Integration</span>
+    <h2 class="case-h2">Measuring AI engagement <em>without touching a line of CORA's code.</em></h2>
+    <p class="case-p">One of BEACON's most significant capabilities is its ability to track CORA Connect resident engagement as a separate, meaningful analytics dimension. When a resident opens the CORA Connect chat widget, BEACON starts a timer. When they close it, BEACON fires a beacon hit to the /cora-connect virtual path with the actual session duration. This data appears separately in the Top Pages dashboard — distinct from homepage traffic — giving staff a real-time view of how many residents are using the AI agent and for how long.</p>
+    <p class="case-p">The entire integration is handled by a MutationObserver in beacon.js v2 watching for the CORA window's CSS state. Zero changes were made to CORA Connect's code. The bounce rate on /cora-connect is always 0% — opening the AI agent is an unambiguous signal of genuine resident engagement.</p>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="case-section reveal">
+    <span class="section-label">Launch Day Results</span>
+    <h2 class="case-h2">431 visitors.<br><em>Day one.</em></h2>
+    <p class="case-p">BEACON went live on May 4, 2026. The launch day data gave the Grand Traverse County IT team its first real picture of how residents use their digital services.</p>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val">431+</div>
+        <div class="metric-lbl">Unique visitors</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">46%</div>
+        <div class="metric-lbl">Bounce rate</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">16s</div>
+        <div class="metric-lbl">Avg. session duration</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">60/40</div>
+        <div class="metric-lbl">Desktop / Mobile split</div>
+      </div>
+    </div>
+
+    <div class="arch-block reveal">
+      <div class="arch-block-title">Traffic Sources — Launch Day</div>
+      <div class="arch-row"><span class="arch-key">Internal</span><span class="arch-val">47% — staff navigating from county intranet and bookmarks</span></div>
+      <div class="arch-row"><span class="arch-key">Google</span><span class="arch-val">31% — organic search driving resident traffic</span></div>
+      <div class="arch-row"><span class="arch-key">Direct</span><span class="arch-val">18% — residents typing the URL directly or using bookmarks</span></div>
+      <div class="arch-row"><span class="arch-key">Bing</span><span class="arch-val">2%</span></div>
+      <div class="arch-row"><span class="arch-key">Referral</span><span class="arch-val">2% — external sites linking to gtcountymi.gov</span></div>
+    </div>
+
+    <p class="case-p">The top page on launch day — /905/Brush-Drop-Off-Site with 14 views and a 21% bounce rate — immediately told the IT team which resident service was driving the most engagement that day. That kind of operational intelligence, delivered in real time, without a single byte of resident PII leaving county infrastructure, is exactly what BEACON was built for.</p>
+  </div>
+
+  <div class="case-section reveal">
+    <span class="section-label">Lessons Learned</span>
+    <h2 class="case-h2">What BEACON taught us about <em>government-owned infrastructure.</em></h2>
+    <div class="principle-list">
+      <div class="principle-item">
+        <div class="principle-title">CORS in GovCloud has specific requirements</div>
+        <p class="principle-text">The single biggest technical challenge was CORS configuration. CivicPlus sends credentialed requests — browsers block wildcard AllowOrigins with credentialed requests. The fix required both explicit origin allowlisting and AllowCredentials=true. This is not intuitive and not well-documented for GovCloud environments. Document it the first time you solve it.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">Self-hosting MSAL.js removes external CDN dependency</div>
+        <p class="principle-text">Rather than loading MSAL.js from a Microsoft CDN, BEACON hosts it directly in S3 GovCloud alongside the dashboard. This eliminates an external dependency, satisfies data residency requirements, and ensures the dashboard works even if CDN availability fluctuates.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">Atomic DynamoDB writes prevent partial data</div>
+        <p class="principle-text">The ingest Lambda writes raw events and updates all five daily dimension counters (pages, referrers, devices, etc.) in a single atomic operation. If any part fails, nothing is written. This design decision eliminated an entire class of data consistency bugs before they could occur in production.</p>
+      </div>
+      <div class="principle-item">
+        <div class="principle-title">MutationObserver integration requires zero changes to tracked systems</div>
+        <p class="principle-text">Tracking CORA Connect engagement through a CSS class observer rather than modifying CORA's code means BEACON can be updated, replaced, or removed without touching the AI agent. Analytics infrastructure should be additive and non-invasive — not tightly coupled to the systems it observes.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="case-cta">
+  <h2>Want to own your <em>analytics infrastructure?</em></h2>
+  <p>We built BEACON for Grand Traverse County because government resident data belongs to government — not to Google, not to SaaS vendors. The architecture, CloudFormation templates, and runbook are available to peer counties.</p>
+  <a href="mailto:ai@gtcountymi.gov" class="btn-primary">Start a Conversation</a>
+</div>
+
+<footer>
+  <a href="index.html" class="footer-logo">LexVector.ai</a>
+  <div class="footer-text">
+    A program of <a href="https://gtcountymi.gov" target="_blank">Grand Traverse County</a>, Michigan<br>
+    The AI Foundry · Center of Excellence for AI<br>
+    <span style="opacity:0.5;">© 2026 Grand Traverse County. All rights reserved.</span>
+  </div>
+</footer>
+</div>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
