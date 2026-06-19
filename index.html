@@ -610,12 +610,110 @@
   .reveal-delay-2 { transition-delay: 0.2s; }
   .reveal-delay-3 { transition-delay: 0.3s; }
 
+  /* ── DEPLOYMENTS ── */
+  .deployments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 1.5rem;
+    margin-top: 4rem;
+  }
+
+  .pipeline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, background 0.3s, transform 0.2s;
+  }
+
+  .pipeline-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(107, 207, 138, 0.55), transparent);
+    opacity: 1;
+  }
+
+  .pipeline-card:hover {
+    border-color: rgba(107, 207, 138, 0.22);
+    background: var(--bg-card-hover);
+    transform: translateY(-3px);
+  }
+
+  .pipeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+  }
+
+  .status-live {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: #6bcf8a;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6bcf8a;
+    animation: pulse-green 2.5s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .pipeline-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .stack-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.2rem 0.55rem;
+    text-transform: uppercase;
+  }
+
+  .pipeline-deployed {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    opacity: 0.5;
+    margin-top: 1rem;
+    text-transform: uppercase;
+  }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 768px) {
     nav { padding: 1rem 1.5rem; }
     .nav-links { display: none; }
     section { padding: 5rem 1.5rem; }
     .about-inner { grid-template-columns: 1fr; gap: 3rem; }
+    .deployments-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
     .footer-text { text-align: center; }
   }
@@ -632,6 +730,7 @@
   </a>
   <ul class="nav-links">
     <li><a href="#agents">Agents</a></li>
+    <li><a href="#deployments">Deployments</a></li>
     <li><a href="#philosophy">Philosophy</a></li>
     <li><a href="#about">About</a></li>
     <li><a href="#contact" class="nav-cta">Contact</a></li>
@@ -723,6 +822,71 @@
 
 <hr class="divider">
 
+<!-- DEPLOYMENTS -->
+<section id="deployments">
+  <p class="section-label reveal">In Production</p>
+  <h2 class="section-title reveal reveal-delay-1">Automation pipelines.<br><em>Operational today.</em></h2>
+  <p class="section-lead reveal reveal-delay-2">Beyond AI agents, LexVector builds workflow automation that eliminates manual processes across county operations — deployed in compliant government cloud environments, running every time the work demands it.</p>
+
+  <div class="deployments-grid">
+
+    <div class="pipeline-card reveal reveal-delay-1">
+      <div class="pipeline-header">
+        <span class="agent-badge">Legislative Records</span>
+        <span class="status-live"><span class="status-dot"></span>Live</span>
+      </div>
+      <h3 class="agent-name">PUTNAM</h3>
+      <p class="agent-tagline">Board Meeting Intelligence Pipeline</p>
+      <p class="agent-desc">Captures the Grand Traverse County Board of Commissioners live stream, extracts audio, transcribes with Whisper, and generates draft minutes through Claude — aligned to the official agenda and ready for the Board Clerk to review. The June 10, 2026 special session ran 3.5 hours; output was delivered the same day.</p>
+      <ul class="agent-features">
+        <li>Live stream capture with automatic retry over Cablecast</li>
+        <li>Whisper transcription for meetings up to 3.5 hours</li>
+        <li>Claude-generated draft minutes structured to the official agenda</li>
+        <li>Split-recording support for recessed or multi-part meetings</li>
+        <li>MP4 archived to Ravnur for public access; DOCX delivered to Board Clerk</li>
+      </ul>
+      <div class="pipeline-stack">
+        <span class="stack-tag">Python</span>
+        <span class="stack-tag">Whisper</span>
+        <span class="stack-tag">Claude API</span>
+        <span class="stack-tag">FFmpeg</span>
+        <span class="stack-tag">Streamlink</span>
+        <span class="stack-tag">Windows</span>
+      </div>
+      <p class="pipeline-deployed">Deployed — Jun 10, 2026</p>
+    </div>
+
+    <div class="pipeline-card reveal reveal-delay-2">
+      <div class="pipeline-header">
+        <span class="agent-badge">Code Enforcement</span>
+        <span class="status-live"><span class="status-dot"></span>Live</span>
+      </div>
+      <h3 class="agent-name">SULLIVAN</h3>
+      <p class="agent-tagline">Inspection Photo Conversion Pipeline</p>
+      <p class="agent-desc">Eliminates the manual iPhone photo handling chain in Code Enforcement. Inspectors submit HEIC photos through a Power App; SULLIVAN converts each file to JPEG, routes it to the correct SharePoint permit folder, writes metadata, and sends Teams notifications — approximately 16 seconds per file, no office staff intervention required.</p>
+      <ul class="agent-features">
+        <li>Power Apps intake — inspectors submit directly from iPhone</li>
+        <li>Automatic HEIC-to-JPEG conversion via Azure Function</li>
+        <li>Files routed to the correct permit folder in SharePoint</li>
+        <li>Teams notifications and metadata logging on every conversion</li>
+        <li>Hosted in Azure Government and M365 GCC — no commercial cloud exposure</li>
+      </ul>
+      <div class="pipeline-stack">
+        <span class="stack-tag">Power Apps</span>
+        <span class="stack-tag">Power Automate GCC</span>
+        <span class="stack-tag">Azure Functions</span>
+        <span class="stack-tag">Python</span>
+        <span class="stack-tag">SharePoint GCC</span>
+        <span class="stack-tag">Azure Government</span>
+      </div>
+      <p class="pipeline-deployed">Deployed — Jun 19, 2026</p>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
 <!-- PHILOSOPHY -->
 <section id="philosophy">
   <p class="section-label reveal">Design Philosophy</p>
@@ -771,8 +935,8 @@
           <div class="stat-label">Departments across Grand Traverse County</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">3</div>
-          <div class="stat-label">Production AI agents in active use</div>
+          <div class="stat-value">5</div>
+          <div class="stat-label">Production systems active</div>
         </div>
       </div>
     </div>
@@ -811,7 +975,7 @@
   <div class="footer-text">
     A program of <a href="https://gtcountymi.gov" target="_blank">Grand Traverse County</a>, Michigan<br>
     The AI Foundry · Center of Excellence for AI<br>
-    <span style="color: var(--text-muted); opacity: 0.5;">© 2025 Grand Traverse County. All rights reserved.</span>
+    <span style="color: var(--text-muted); opacity: 0.5;">© 2026 Grand Traverse County. All rights reserved.</span>
   </div>
 </footer>
 
